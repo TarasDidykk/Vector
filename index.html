@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Цифрові інструменти вчителя</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: шкільний зошит у клітинку — зміст курсу зліва, аркуш модуля з червоними полями справа */
+:root{
+  --paper:#f8faff; --grid:rgba(58,96,196,.10); --surface:#ffffff; --line:#d6deef;
+  --ink:#1f3577; --ink-soft:#4b5c94; --text:#1a2133; --muted:#5b6480;
+  --red:#cf3f3f; --done:#25805a; --done-bg:#e3f4ea; --chip:#eef2fc;
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",Roboto,system-ui,sans-serif;
+  --f-hand:"Caveat","Comic Sans MS",cursive;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#111829; --grid:rgba(140,170,255,.07); --surface:#172036; --line:#2a3655;
+  --ink:#a9bdff; --ink-soft:#8b9cd6; --text:#e5e9f4; --muted:#9aa3be;
+  --red:#ff7f72; --done:#62cd95; --done-bg:#183a2b; --chip:#1f2a46; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111829; --grid:rgba(140,170,255,.07); --surface:#172036; --line:#2a3655;
+  --ink:#a9bdff; --ink-soft:#8b9cd6; --text:#e5e9f4; --muted:#9aa3be;
+  --red:#ff7f72; --done:#62cd95; --done-bg:#183a2b; --chip:#1f2a46; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+  color:var(--text); font:16px/1.6 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 48px;
+}
+a{color:var(--ink)}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px;border-radius:4px}
+
+.top{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;padding-block:22px 18px}
+.brand{font:700 15px/1.2 var(--f-display);color:var(--ink);letter-spacing:.01em;text-decoration:none}
+.brand small{display:block;font:500 12px var(--f-body);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.progress{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+.bar{width:140px;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--done);width:0;transition:width .4s}
+
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
+
+/* Зміст */
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+.toc h2{font:700 12px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.toc a{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--text);border:1px solid transparent}
+.toc a:hover{background:var(--chip)}
+.toc a[aria-current="page"]{background:var(--surface);border-color:var(--line);box-shadow:0 1px 0 var(--line)}
+.toc .n{font:700 13px var(--f-display);color:var(--ink);text-align:center}
+.toc .t{font-size:14.5px;line-height:1.3}
+.toc .h{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.toc a.is-done .n{color:var(--done)}
+.toc a.is-done .h::after{content:" ✓";color:var(--done);font-weight:600}
+.toc .note{font:600 20px/1.2 var(--f-hand);color:var(--red);margin:16px 12px 0;transform:rotate(-2deg)}
+
+/* Аркуш */
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:4px 14px 14px 4px;position:relative;padding:36px 40px 40px 76px;min-width:0}
+.sheet::before{content:"";position:absolute;top:0;bottom:0;left:52px;width:2px;background:var(--red);opacity:.55}
+.kicker{font:600 12px var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin:0 0 8px}
+h1{font:700 clamp(24px,3.4vw,36px)/1.15 var(--f-display);color:var(--ink);margin:0 0 14px;text-wrap:balance;letter-spacing:-.01em}
+h2.sec{font:700 17px/1.3 var(--f-display);color:var(--ink);margin:36px 0 12px;text-wrap:balance}
+p{margin:0 0 12px;max-width:66ch}
+.lead{font-size:18px;color:var(--muted);max-width:60ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px;padding:0;list-style:none}
+.meta li{background:var(--chip);color:var(--ink);font-size:13.5px;font-weight:500;padding:5px 12px;border-radius:99px}
+.hand{font:600 22px/1.25 var(--f-hand);color:var(--red)}
+
+/* Відео */
+.video{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;border:1.5px dashed var(--line);border-radius:12px;padding:18px 20px;margin:22px 0 4px;text-decoration:none;color:var(--text)}
+a.video{border-style:solid;background:var(--chip)}
+a.video:hover{border-color:var(--ink)}
+.play{width:54px;height:54px;border-radius:50%;background:var(--ink);display:grid;place-items:center}
+.play svg{fill:var(--surface);margin-left:3px}
+.video.empty .play{background:var(--line)}
+.video b{display:block;font-weight:600}
+.video span{font-size:14px;color:var(--muted)}
+
+/* Кроки */
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:14px;max-width:70ch}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:12px}
+ol.steps li::before{content:counter(s);font:700 14px/30px var(--f-display);color:var(--ink);border:1.5px solid var(--ink);border-radius:50%;width:30px;height:30px;text-align:center}
+ol.steps li>div{min-width:0;padding-top:3px}
+.tip{border-left:3px solid var(--red);padding:4px 0 4px 16px;margin:20px 0;max-width:66ch;color:var(--text)}
+.tip strong{color:var(--red)}
+code,kbd{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:.9em;background:var(--chip);padding:1px 6px;border-radius:5px}
+
+.prompt{background:var(--chip);border-radius:10px;padding:16px 18px;margin:12px 0;max-width:70ch;position:relative}
+.prompt pre{white-space:pre-wrap;margin:0;font:15px/1.55 var(--f-body);color:var(--text)}
+.copy{margin-top:12px;font:600 13px var(--f-body);color:var(--ink);background:transparent;border:1.5px solid var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer}
+.copy:hover{background:var(--surface)}
+
+/* Завдання */
+.task{margin-top:36px;border:1.5px solid var(--ink);border-radius:12px;padding:22px 24px;max-width:72ch}
+.task h2{font:700 16px var(--f-display);color:var(--ink);margin:0 0 10px}
+.task ul{margin:8px 0 0;padding-left:20px}
+.task li{margin-bottom:4px}
+.actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 15px var(--f-body);padding:11px 20px;border-radius:10px;text-decoration:none;border:1.5px solid var(--ink);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--surface)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.check{display:inline-flex;align-items:center;gap:10px;font-weight:500;cursor:pointer;padding:10px 14px;border-radius:10px;border:1.5px solid var(--line)}
+.check input{width:20px;height:20px;accent-color:var(--done)}
+.check.on{background:var(--done-bg);border-color:var(--done);color:var(--done)}
+.small{font-size:13.5px;color:var(--muted)}
+
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:6px 0 4px;padding:0;list-style:none;counter-reset:h}
+.how li{counter-increment:h;border-top:2px solid var(--ink);padding-top:12px}
+.how li::before{content:"Крок " counter(h);display:block;font:600 12px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:4px}
+.how b{display:block;color:var(--ink);margin-bottom:2px}
+.how span{font-size:14.5px;color:var(--muted)}
+
+table.plan{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto;max-width:72ch}
+table.plan th,table.plan td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.plan th{font-weight:600;color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}
+table.plan td.num,table.plan th.num{text-align:right;white-space:nowrap}
+table.plan tfoot td{font-weight:600;color:var(--ink);border-bottom:0}
+
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:40px;padding-top:20px;border-top:1px dashed var(--line);flex-wrap:wrap}
+.pager a{text-decoration:none;font-weight:500}
+.pager small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+
+@media (max-width:860px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  .toc{position:static}
+  .toc ol{flex-direction:row;overflow-x:auto;padding-bottom:6px;gap:6px}
+  .toc a{grid-template-columns:auto auto;flex:0 0 auto;background:var(--surface);border-color:var(--line)}
+  .toc .h,.toc .note{display:none}
+  .sheet{padding:26px 20px 30px 40px}
+  .sheet::before{left:24px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="#intro">Цифрові інструменти вчителя<small>Курс підвищення кваліфікації · 15 год / 0,5 ЄКТС</small></a>
+  <div class="progress" aria-live="polite"><span id="progText">Пройдено 0 з 6</span><div class="bar"><i id="progBar"></i></div></div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Зміст курсу">
+    <h2>Зміст</h2>
+    <ol id="toc"></ol>
+    <p class="note">Проходьте у своєму темпі — розкладу немає</p>
+  </nav>
+  <main class="sheet" id="view" tabindex="-1"></main>
+</div>
+
+<script>
+/* ====== НАЛАШТУВАННЯ: вставте свої посилання ====== */
+const CONFIG = {
+  formUrl: "",        // Google-форма для здачі робіт
+  chatUrl: "",        // Telegram-чат курсу
+  trainer: "Тарас Дідик",
+  videos: { m1:"", m2:"", m3:"", m4:"", m5:"", m6:"" }  // посилання на відео (YouTube, Google Drive)
+};
+/* =================================================== */
+
+const MODULES = [
+ {id:"m1", short:"Wordwall і LearningApps", hours:"3 год", title:"Інтерактивні вправи: Wordwall і LearningApps", vlen:"≈ 15 хв",
+  lead:"Створіть дві вправи до теми свого уроку і дайте учням посилання — без реєстрації учнів і без встановлення програм.",
+  steps:[
+   ["Зареєструйтесь на wordwall.net","Натисніть «Зареєструватися», увійдіть через Google. Безкоштовного плану вистачить для курсу."],
+   ["Створіть активність","«Створити активність» → оберіть шаблон «Вікторина», «Знайди пару» або «Групування». Почніть з того, що вже робите на уроці усно."],
+   ["Заповніть вміст","Введіть 6–10 питань або пар. Додайте картинки кнопкою з іконкою зображення — для молодших класів це суттєво."],
+   ["Поділіться з учнями","«Готово» → «Поділитися» → «Встановити завдання» (результати бачите ви) або «Опублікувати» (просто посилання)."],
+   ["Зробіть вправу в LearningApps","learningapps.org → «Створити вправу» → шаблон «Знайди пару» або «Хронологічна лінія» → заповніть → «Зберегти вправу» → скопіюйте посилання."]
+  ],
+  tip:"Зробіть обидві вправи до однієї теми. Так ви одразу отримаєте готовий блок для закріплення на уроці.",
+  task:["Одна вправа у Wordwall і одна у LearningApps до теми вашого уроку.","Посилання на обидві вправи працюють без входу в акаунт.","Одне речення: на якому етапі уроку використаєте."]},
+ {id:"m2", short:"Canva", hours:"2,5 год", title:"Візуальні матеріали в Canva", vlen:"≈ 12 хв",
+  lead:"Зберіть презентацію або робочий аркуш із готового шаблону за 20 хвилин замість двох годин.",
+  steps:[
+   ["Отримайте Canva для освіти","canva.com/education → «Підтвердити статус вчителя». Безкоштовно дає всі шаблони і Pro-елементи."],
+   ["Знайдіть шаблон","У пошуку введіть «презентація урок», «робочий аркуш» або «worksheet» і оберіть формат під свою задачу."],
+   ["Замініть вміст","Змініть текст, кольори, вставте свої фото. Тримайте один шрифт для заголовків і один для тексту."],
+   ["Поділіться","«Поділитися» → «Посилання лише для перегляду» або «Завантажити» → PDF для друку."]
+  ],
+  tip:"Шрифт на слайді — не менше 24 пт. Якщо текст не вміщається, розбийте слайд на два.",
+  task:["Презентація на 6–10 слайдів або робочий аркуш формату A4 до теми уроку.","Посилання для перегляду або PDF.","Матеріал зроблено вами, а не просто взято шаблон без змін."]},
+ {id:"m3", short:"Google Forms", hours:"2,5 год", title:"Тести та опитування в Google Forms", vlen:"≈ 14 хв",
+  lead:"Тест, який сам перевіряє відповіді і показує учню пояснення до помилок.",
+  steps:[
+   ["Створіть форму","forms.google.com → «Порожня форма». Назвіть її так, щоб учні зрозуміли тему."],
+   ["Увімкніть режим тесту","«Налаштування» → «Зробити тестом». Тепер у кожного питання з’явиться «Ключ відповідей»."],
+   ["Додайте питання і бали","Для кожного питання: правильна відповідь, кількість балів, «Додати відгук» — коротке пояснення для неправильної відповіді."],
+   ["Подбайте про дані учнів","Збирайте лише ім’я та клас. Не вмикайте збір адрес, якщо учні без шкільних акаунтів."],
+   ["Подивіться результати","Вкладка «Відповіді» → «Підсумок» показує, яке питання найважче. Кнопка «Таблиця» відкриє всі відповіді в Google Таблицях."]
+  ],
+  tip:"Найцінніше в результатах — питання, на якому помилилась більшість. З нього варто почати наступний урок.",
+  task:["Тест на 8–10 питань з автоматичною перевіркою.","Мінімум 2 питання з відгуком-поясненням.","Посилання для учнів."]},
+ {id:"m4", short:"Genially", hours:"2,5 год", title:"Інтерактивні презентації та квести в Genially", vlen:"≈ 15 хв",
+  lead:"Урок-гра: учні проходять квест і відкривають наступний крок лише після правильної відповіді.",
+  steps:[
+   ["Увійдіть на genially.com","Реєстрація через Google, оберіть роль «Вчитель»."],
+   ["Оберіть ігровий шаблон","«Створити» → «Гейміфікація» → «Escape game» або «Квест». Для початку беріть шаблон з 3–5 кроками."],
+   ["Змініть завдання","На кожному кроці замініть питання своїми. Правильна відповідь веде кнопкою на наступну сторінку, неправильна — на сторінку «Спробуй ще»."],
+   ["Перевірте і поділіться","Пройдіть квест сам(а) від початку до кінця, потім «Поділитися» → посилання."]
+  ],
+  tip:"Квест на 3 кроки, який учні пройдуть за 7 хвилин, працює краще, ніж квест на 10 кроків, який не встигнуть закінчити.",
+  task:["Квест мінімум з 3 кроків або інтерактивна презентація з прихованими підказками.","Усі кнопки переходу працюють.","Посилання для учнів."]},
+ {id:"m5", short:"ШІ-помічники", hours:"3 год", title:"ШІ-помічники для вчителя", vlen:"≈ 18 хв",
+  lead:"ChatGPT, Gemini чи Claude складуть чернетку завдань і критеріїв. Ваша робота — перевірити і довести до ладу.",
+  steps:[
+   ["Пишіть запит за формулою","Хто ви + клас і предмет + тема + що потрібно + формат + обмеження. Чим конкретніше, тим менше переробляти."],
+   ["Просіть рівні складності","Завдання на впізнавання, застосування і творчі — так легше працювати з різними учнями."],
+   ["Перевіряйте факти","ШІ впевнено помиляється в датах, числах і правилах. Кожен факт звіряйте з підручником."],
+   ["Захищайте учнів","Не вводьте прізвища, оцінки чи особисті дані дітей. Описуйте ситуацію загально."],
+   ["Чесно з учнями","Домовтесь з класом, коли ШІ можна використовувати, а коли ні. Це частина академічної доброчесності."]
+  ],
+  prompt:"Ти досвідчений вчитель. Я вчитель [предмет] у [клас] класі.\nТема уроку: [тема].\nСтвори 6 завдань: 2 на відтворення, 2 на застосування, 2 творчі.\nДо кожного — правильну відповідь.\nПотім склади критерії оцінювання за 12-бальною шкалою у вигляді таблиці.\nПиши українською, простими реченнями, без складних термінів.",
+  tip:"Додайте до запиту фразу «Спершу постав мені 3 уточнювальні питання». Результат стане помітно точнішим.",
+  task:["6 завдань трьох рівнів і критерії оцінювання, створені з ШІ.","Ваш запит (промпт), яким користувались.","2–3 речення: що ви змінили після ШІ і чому."]},
+ {id:"m6", short:"Підсумок", hours:"1,5 год", title:"Підсумковий модуль: урок з цифровими інструментами", vlen:"≈ 8 хв",
+  lead:"Зберіть усе в один урок і здайте портфоліо. Після перевірки ви отримаєте сертифікат через платформу «Вектор».",
+  steps:[
+   ["Оберіть урок","Візьміть одну тему, до якої вже зробили матеріали в модулях 1–5."],
+   ["Розставте інструменти","Актуалізація — вправа Wordwall; новий матеріал — Canva або Genially; закріплення — квест; перевірка — Google Forms; підготовка — ШІ."],
+   ["Опишіть або запишіть","Коротко опишіть хід уроку або запишіть відео до 3 хв на телефон чи запис екрана."],
+   ["Здайте портфоліо","Надішліть усі 5 посилань і опис уроку через форму здачі."]
+  ],
+  tip:"Не обов’язково використовувати всі інструменти на одному уроці. Достатньо двох-трьох, доречних для етапів.",
+  task:["Посилання на 5 матеріалів з модулів 1–5.","Опис уроку або відео до 3 хв.","Відповідь на питання: що з курсу ви вже використали з учнями?"]}
+];
+
+const KEY="cit-progress";
+let done={};
+try{done=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){done={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}}
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const playIcon='<svg width="20" height="22" viewBox="0 0 20 22" aria-hidden="true"><path d="M0 0l20 11L0 22z"/></svg>';
+
+function renderToc(cur){
+  const items=[`<li><a href="#intro" ${cur==="intro"?'aria-current="page"':""}><span class="n">·</span><span class="t">Про курс</span><span class="h"></span></a></li>`]
+   .concat(MODULES.map((m,i)=>`<li><a href="#${m.id}" class="${done[m.id]?"is-done":""}" ${cur===m.id?'aria-current="page"':""}><span class="n">${i+1}</span><span class="t">${esc(m.short)}</span><span class="h">${m.hours}</span></a></li>`));
+  document.getElementById("toc").innerHTML=items.join("");
+  const n=MODULES.filter(m=>done[m.id]).length;
+  document.getElementById("progText").textContent=`Пройдено ${n} з ${MODULES.length}`;
+  document.getElementById("progBar").style.width=(n/MODULES.length*100)+"%";
+}
+
+function linkOrNote(url,label,missing){
+  return url?`<a class="btn primary" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`
+            :`<span class="btn primary" aria-disabled="true" title="${esc(missing)}">${label}</span>`;
+}
+
+function intro(){
+  return `
+  <p class="kicker">Дистанційний курс · без зустрічей і розкладу</p>
+  <h1>Цифрові інструменти вчителя: інтерактивні уроки без складних технологій</h1>
+  <p class="lead">За 2–3 тижні у власному темпі ви освоїте шість інструментів і створите 5 готових матеріалів для своїх уроків.</p>
+  <ul class="meta"><li>15 годин</li><li>0,5 кредиту ЄКТС</li><li>6 модулів</li><li>Сертифікат через «Вектор»</li></ul>
+
+  <h2 class="sec">Як проходити курс</h2>
+  <ol class="how">
+    <li><b>Перегляньте відео</b><span>10–20 хв на модуль, можна на паузі повторювати за тренером.</span></li>
+    <li><b>Зробіть за інструкцією</b><span>Покрокові підказки під кожним відео.</span></li>
+    <li><b>Здайте роботу</b><span>Посилання на свій матеріал через форму здачі.</span></li>
+    <li><b>Отримайте відгук</b><span>Тренер перевіряє і пише коментар протягом 2 робочих днів.</span></li>
+  </ol>
+
+  <h2 class="sec">Програма</h2>
+  <div class="tbl"><table class="plan">
+    <thead><tr><th>Модуль</th><th class="num">Теорія</th><th class="num">Практика</th><th class="num">Разом</th></tr></thead>
+    <tbody>
+     <tr><td>1. Wordwall і LearningApps</td><td class="num">1</td><td class="num">2</td><td class="num">3</td></tr>
+     <tr><td>2. Canva</td><td class="num">0,5</td><td class="num">2</td><td class="num">2,5</td></tr>
+     <tr><td>3. Google Forms</td><td class="num">0,5</td><td class="num">2</td><td class="num">2,5</td></tr>
+     <tr><td>4. Genially</td><td class="num">0,5</td><td class="num">2</td><td class="num">2,5</td></tr>
+     <tr><td>5. ШІ-помічники</td><td class="num">1</td><td class="num">2</td><td class="num">3</td></tr>
+     <tr><td>6. Підсумок і портфоліо</td><td class="num">0,5</td><td class="num">1</td><td class="num">1,5</td></tr>
+    </tbody>
+    <tfoot><tr><td>Разом, год</td><td class="num">4</td><td class="num">11</td><td class="num">15</td></tr></tfoot>
+  </table></div>
+
+  <h2 class="sec">Що потрібно</h2>
+  <p>Комп’ютер або ноутбук з інтернетом і акаунт Google. Усі сервіси курсу безкоштовні, досвід не потрібен.</p>
+
+  <h2 class="sec">Сертифікат</h2>
+  <p>Ви отримуєте його, коли пройшли всі 6 модулів і здали портфоліо з 5 матеріалів. Сертифікат реєструється на державній платформі «Вектор», тож школа зможе перевірити його там.</p>
+
+  <h2 class="sec">Тренер і підтримка</h2>
+  <p>${esc(CONFIG.trainer)} — вчитель інформатики, засновник IT-Простору / Академії. Питання ставте в чаті курсу, відповідь протягом доби в робочі дні.</p>
+  <p class="hand">Відмічайте пройдені модулі — прогрес видно вгорі сторінки</p>
+
+  <div class="actions">
+    <a class="btn primary" href="#m1">Почати з модуля 1</a>
+    ${CONFIG.chatUrl?`<a class="btn ghost" href="${esc(CONFIG.chatUrl)}" target="_blank" rel="noopener">Чат курсу</a>`:""}
+  </div>`;
+}
+
+function module(m,i){
+  const v=CONFIG.videos[m.id];
+  const video=v
+    ?`<a class="video" href="${esc(v)}" target="_blank" rel="noopener"><span class="play">${playIcon}</span><span><b>Відеоурок модуля ${i+1}</b><span>${m.vlen} · відкриється в новій вкладці</span></span></a>`
+    :`<div class="video empty"><span class="play">${playIcon}</span><span><b>Відеоурок модуля ${i+1}</b><span>${m.vlen} · відео скоро з’явиться тут</span></span></div>`;
+  const prev=i===0?{id:"intro",t:"Про курс"}:{id:MODULES[i-1].id,t:MODULES[i-1].short};
+  const next=MODULES[i+1];
+  return `
+  <p class="kicker">Модуль ${i+1} · ${m.hours}</p>
+  <h1>${esc(m.title)}</h1>
+  <p class="lead">${esc(m.lead)}</p>
+  ${video}
+
+  <h2 class="sec">Покрокова інструкція</h2>
+  <ol class="steps">${m.steps.map(s=>`<li><div><b>${esc(s[0])}.</b> ${esc(s[1])}</div></li>`).join("")}</ol>
+
+  ${m.prompt?`<h2 class="sec">Шаблон запиту</h2><p>Скопіюйте і замініть слова в дужках.</p>
+   <div class="prompt"><pre id="promptText">${esc(m.prompt)}</pre><button class="copy" id="copyBtn" type="button">Скопіювати</button></div>`:""}
+
+  <p class="tip"><strong>Порада.</strong> ${esc(m.tip)}</p>
+
+  <section class="task" aria-labelledby="t-${m.id}">
+    <h2 id="t-${m.id}">Завдання модуля</h2>
+    <ul>${m.task.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+  </section>
+
+  <div class="actions">
+    ${linkOrNote(CONFIG.formUrl,"Здати роботу","Посилання на форму здачі додасть тренер")}
+    <label class="check ${done[m.id]?"on":""}" for="done-${m.id}"><input type="checkbox" id="done-${m.id}" ${done[m.id]?"checked":""}> Модуль виконано</label>
+  </div>
+  ${CONFIG.formUrl?"":`<p class="small" style="margin-top:10px">Форма здачі робіт з’явиться після старту набору.</p>`}
+
+  <nav class="pager" aria-label="Перехід між модулями">
+    <a href="#${prev.id}"><small>Назад</small>${esc(prev.t)}</a>
+    ${next?`<a href="#${next.id}" style="text-align:right"><small>Далі</small>${esc(next.short)}</a>`:`<a href="#intro" style="text-align:right"><small>Готово</small>Про курс і сертифікат</a>`}
+  </nav>`;
+}
+
+function route(){
+  const h=location.hash.replace("#","");
+  const i=MODULES.findIndex(m=>m.id===h);
+  const view=document.getElementById("view");
+  const cur=i>=0?h:"intro";
+  view.innerHTML=i>=0?module(MODULES[i],i):intro();
+  renderToc(cur);
+  const cb=view.querySelector('input[type="checkbox"]');
+  if(cb) cb.addEventListener("change",()=>{
+    done[MODULES[i].id]=cb.checked; save();
+    cb.parentElement.classList.toggle("on",cb.checked); renderToc(cur);
+  });
+  const copy=document.getElementById("copyBtn");
+  if(copy) copy.addEventListener("click",()=>{
+    const txt=document.getElementById("promptText").textContent;
+    const ok=()=>{copy.textContent="Скопійовано"; setTimeout(()=>copy.textContent="Скопіювати",1800)};
+    const fallback=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("promptText"));const s=getSelection();s.removeAllRanges();s.addRange(r);copy.textContent="Виділено — натисніть Ctrl+C"};
+    try{navigator.clipboard.writeText(txt).then(ok,fallback)}catch(e){fallback()}
+  });
+  if(document.readyState==="complete") window.scrollTo({top:0});
+}
+addEventListener("hashchange",()=>{route();document.getElementById("view").focus({preventScroll:true})});
+route();
+</script>
+</body>
+</html>
